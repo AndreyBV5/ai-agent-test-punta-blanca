@@ -15,9 +15,7 @@ SRC_DIR = os.path.join(BASE_DIR, "data", "sources")
 VEC_DIR = os.path.join(BASE_DIR, "data", "vectorstore")
 DOMAIN = "https://www.puntablanca.ai/"
 
-
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-004")
-
 
 os.makedirs(SRC_DIR, exist_ok=True)
 os.makedirs(VEC_DIR, exist_ok=True)
