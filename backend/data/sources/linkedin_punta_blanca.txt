@@ -1,0 +1,20 @@
+Punta Blanca Solutions es una empresa costarricense dedicada al desarrollo de soluciones de Inteligencia Artificial. 
+Nuestro propósito es ayudar a las organizaciones a ser más eficientes, ágiles y competitivas mediante el uso de tecnología avanzada.
+
+Áreas de enfoque:
+- Healthcare: desarrollo de soluciones para mejorar procesos en hospitales y clínicas.
+- Retail / CPG: herramientas de análisis y automatización para optimizar cadenas de suministro y experiencia del cliente.
+
+Servicios principales:
+- Consultoría en Inteligencia Artificial y Transformación Digital
+- Desarrollo de aplicaciones personalizadas con IA
+- Creación de agentes conversacionales inteligentes
+- Automatización de procesos de negocio
+- Estrategia y asesoría en el uso de datos
+
+Nuestra misión es impulsar la innovación a través de la IA y acompañar a las empresas en su proceso de adopción tecnológica.
+
+Industria: Software Development / Information Technology
+Tamaño de la empresa: 11-50 empleados
+Sede: Costa Rica
+Sitio web: https://www.puntablanca.ai
