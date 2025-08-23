@@ -1,5 +1,6 @@
 import os
 from typing import List
+import anyio
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.schema import Document
@@ -18,7 +19,6 @@ _TEMPLATE = ChatPromptTemplate.from_messages([
 ])
 
 def get_llm():
-    # El cliente es barato; si quisieras, podrías memoizarlo
     return ChatGoogleGenerativeAI(model=GENERATION_MODEL, temperature=0.2)
 
 def format_docs(docs: List[Document]) -> str:
@@ -28,13 +28,17 @@ def format_docs(docs: List[Document]) -> str:
         parts.append(f"[Fuente] {src}\n{d.page_content}")
     return "\n\n---\n\n".join(parts)
 
-async def generate_answer(question: str, docs: List[Document]) -> str:
+# ---- Nota: helper asíncrono que corre DENTRO de anyio.run() ----
+async def _agen(question: str, docs: List[Document]) -> str:
     llm = get_llm()
     prompt = _TEMPLATE.format_messages(
         question=question,
         context=format_docs(docs),
     )
-    # IMPORTANTE: usar la vía asíncrona
     resp = await llm.ainvoke(prompt)
     return resp.content if hasattr(resp, "content") else str(resp)
-    
+
+def generate_answer(question: str, docs: List[Document]) -> str:
+    """Función SINCRÓNICA que garantiza un loop propio incluso si
+    la ejecuta un AnyIO worker thread sin event loop activo."""
+    return anyio.run(_agen, question, docs)

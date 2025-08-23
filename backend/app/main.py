@@ -18,10 +18,11 @@ _graph = build_graph()
 def root():
     return {"ok": True, "service": "rag-agent", "health": "green"}
 
+# Endpoint SINCRÓNICO -> el grafo también se invoca de forma sync
 @app.post("/api/ask", response_model=AskResponse)
-async def ask(req: AskRequest):  # endpoint async
+def ask(req: AskRequest):
     try:
-        result = await _graph.ainvoke({"question": req.question})  # grafo async
+        result = _graph.invoke({"question": req.question})
         return AskResponse(
             answer=str(result.get("answer", "")),
             sources=[str(s) for s in result.get("sources", [])],
