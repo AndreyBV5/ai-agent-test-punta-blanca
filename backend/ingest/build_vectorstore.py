@@ -2,6 +2,7 @@ import os
 import re
 import json
 import argparse
+from typing import List
 from urllib.parse import urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
@@ -28,9 +29,9 @@ def clean_text(html: str) -> str:
     text = re.sub(r"\n{2,}", "\n\n", text)
     return text.strip()
 
-def crawl(domain: str, max_pages: int = 20) -> list[Document]:
+def crawl(domain: str, max_pages: int = 20) -> List[Document]:
     seen, queue = set(), [domain]
-    docs = []
+    docs: List[Document] = []
     client = httpx.Client(timeout=20.0, follow_redirects=True)
     while queue and len(seen) < max_pages:
         url = queue.pop(0)
@@ -45,7 +46,6 @@ def crawl(domain: str, max_pages: int = 20) -> list[Document]:
             if not text:
                 continue
             docs.append(Document(page_content=text, metadata={"source": url}))
-            # descubrir enlaces internos
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.find_all("a", href=True):
                 href = urljoin(url, a["href"])
@@ -59,7 +59,7 @@ def crawl(domain: str, max_pages: int = 20) -> list[Document]:
     client.close()
     return docs
 
-def load_linkedin_txt() -> list[Document]:
+def load_linkedin_txt() -> List[Document]:
     path = os.path.join(SRC_DIR, "linkedin_punta_blanca.txt")
     if not os.path.exists(path):
         return []
@@ -67,19 +67,18 @@ def load_linkedin_txt() -> list[Document]:
         txt = f.read().strip()
     if not txt:
         return []
-    # Incluye la URL pública de LinkedIn si la conoces; si no, etiqueta como linkedin
     return [Document(page_content=txt, metadata={"source": "linkedin"})]
 
-def build_index(docs: list[Document]):
+def build_index(docs: List[Document]):
     splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
-    embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)  # requiere GOOGLE_API_KEY
     vs = FAISS.from_documents(chunks, embeddings)
     vs.save_local(VEC_DIR)
     print(f"[ok] Guardado FAISS en: {VEC_DIR} (chunks={len(chunks)})")
 
 def main(do_crawl: bool):
-    docs = []
+    docs: List[Document] = []
     if do_crawl:
         print("[crawl] puntablanca.ai ...")
         docs.extend(crawl(DOMAIN, max_pages=30))

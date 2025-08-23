@@ -5,12 +5,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-
-VECTOR_PATH = os.getenv("VECTOR_PATH", os.path.join(os.path.dirname(__file__), "..", "data", "vectorstore"))
+VECTOR_PATH = os.getenv(
+    "VECTOR_PATH",
+    os.path.join(os.path.dirname(__file__), "..", "data", "vectorstore"),
+)
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-004")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 
 def get_embeddings():
+    # requiere GOOGLE_API_KEY en el entorno
     return GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
 
 def load_vectorstore() -> FAISS:
@@ -19,7 +22,6 @@ def load_vectorstore() -> FAISS:
     return vs
 
 def build_retriever(vs: FAISS):
-# similarity + relevance scores para confianza
     return vs.as_retriever(search_type="similarity", search_kwargs={"k": RAG_TOP_K})
 
 def similarity_with_scores(vs: FAISS, query: str) -> List[Tuple[Document, float]]:

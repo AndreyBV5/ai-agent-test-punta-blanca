@@ -4,6 +4,7 @@ from .schemas import AskRequest, AskResponse
 from .graph import build_graph
 
 app = FastAPI(title="RAG Agent – Punta Blanca", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,6 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# compila el grafo una sola vez
 _graph = build_graph()
 
 @app.get("/")
@@ -19,9 +21,10 @@ def root():
     return {"ok": True, "service": "rag-agent", "health": "green"}
 
 @app.post("/api/ask", response_model=AskResponse)
-async def ask(req: AskRequest):                         # <- async
+async def ask(req: AskRequest):
     try:
-        result = await _graph.ainvoke({"question": req.question})  # <- await ainvoke
+        # usar el modo async del grafo
+        result = await _graph.ainvoke({"question": req.question})
         return AskResponse(
             answer=str(result.get("answer", "")),
             sources=[str(s) for s in result.get("sources", [])],

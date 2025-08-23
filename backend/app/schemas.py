@@ -6,5 +6,5 @@ class AskRequest(BaseModel):
 
 class AskResponse(BaseModel):
     answer: str
-    sources: List[str] = []
+    sources: List[str] = Field(default_factory=list)  # evitar mutable default
     confidence: float = 0.0

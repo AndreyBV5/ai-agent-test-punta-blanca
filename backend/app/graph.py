@@ -4,7 +4,6 @@ from langchain.schema import Document
 from .retrieval import load_vectorstore, similarity_with_scores
 from .generation import generate_answer
 
-
 class AgentState(TypedDict):
     question: str
     docs: List[Document]
@@ -29,7 +28,7 @@ def _ensure_vs():
 
 def retrieval_node(state: AgentState):
     vs = _ensure_vs()
-    pairs = similarity_with_scores(vs, state["question"]) # (Document, score)
+    pairs = similarity_with_scores(vs, state["question"])  # (Document, score)
     docs = [d for d, _ in pairs]
     scores = [float(s) for _, s in pairs]
     sources = list(dict.fromkeys([d.metadata.get("source", "") for d in docs if d]))
@@ -37,18 +36,17 @@ def retrieval_node(state: AgentState):
 
 def generation_node(state: AgentState):
     answer = generate_answer(state["question"], state.get("docs", []))
-    # confianza: promedio de relevance_scores si existen, si no 0.5
     scores = state.get("scores", [])
-    conf = float(sum(scores)/len(scores)) if scores else 0.5
+    conf = float(sum(scores) / len(scores)) if scores else 0.5
     return {**state, "answer": answer, "confidence": round(conf, 3)}
 
 def output_node(state: AgentState):
-# nodo final solo asegura llaves mínimas
+    # nodo final solo asegura llaves mínimas
     return {
-    "answer": state.get("answer", ""),
-    "sources": state.get("sources", []),
-    "confidence": state.get("confidence", 0.0),
-}
+        "answer": state.get("answer", ""),
+        "sources": state.get("sources", []),
+        "confidence": state.get("confidence", 0.0),
+    }
 
 def build_graph():
     g = StateGraph(AgentState)
