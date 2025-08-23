@@ -18,7 +18,6 @@ def input_node(state: AgentState):
         raise ValueError("Pregunta demasiado corta")
     return {**state, "question": q}
 
-# cache simple del vectorstore
 _VS = None
 def _ensure_vs():
     global _VS
@@ -28,20 +27,19 @@ def _ensure_vs():
 
 def retrieval_node(state: AgentState):
     vs = _ensure_vs()
-    pairs = similarity_with_scores(vs, state["question"])  # (Document, score)
+    pairs = similarity_with_scores(vs, state["question"])
     docs = [d for d, _ in pairs]
     scores = [float(s) for _, s in pairs]
     sources = list(dict.fromkeys([d.metadata.get("source", "") for d in docs if d]))
     return {**state, "docs": docs, "scores": scores, "sources": sources}
 
-def generation_node(state: AgentState):
-    answer = generate_answer(state["question"], state.get("docs", []))
+async def generation_node(state: AgentState):
+    answer = await generate_answer(state["question"], state.get("docs", []))
     scores = state.get("scores", [])
-    conf = float(sum(scores) / len(scores)) if scores else 0.5
+    conf = float(sum(scores)/len(scores)) if scores else 0.5
     return {**state, "answer": answer, "confidence": round(conf, 3)}
 
 def output_node(state: AgentState):
-    # nodo final solo asegura llaves mínimas
     return {
         "answer": state.get("answer", ""),
         "sources": state.get("sources", []),
@@ -52,7 +50,7 @@ def build_graph():
     g = StateGraph(AgentState)
     g.add_node("input", input_node)
     g.add_node("retrieval", retrieval_node)
-    g.add_node("generation", generation_node)
+    g.add_node("generation", generation_node)  # <- async node
     g.add_node("output", output_node)
 
     g.set_entry_point("input")

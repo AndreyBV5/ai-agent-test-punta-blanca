@@ -12,15 +12,13 @@ _SYSTEM = (
     "Responde en el idioma de la pregunta. Sé conciso, preciso y cita brevemente las fuentes por URL al final."
 )
 
-_TEMPLATE = ChatPromptTemplate.from_messages(
-    [
-        ("system", _SYSTEM),
-        ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara."),
-    ]
-)
+_TEMPLATE = ChatPromptTemplate.from_messages([
+    ("system", _SYSTEM),
+    ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara."),
+])
 
 def get_llm():
-    # requiere GOOGLE_API_KEY en el entorno
+    # El cliente es barato; si quisieras, podrías memoizarlo
     return ChatGoogleGenerativeAI(model=GENERATION_MODEL, temperature=0.2)
 
 def format_docs(docs: List[Document]) -> str:
@@ -28,11 +26,15 @@ def format_docs(docs: List[Document]) -> str:
     for d in docs:
         src = d.metadata.get("source", "")
         parts.append(f"[Fuente] {src}\n{d.page_content}")
-    # <-- el return debe ir fuera del for para incluir TODOS los docs
     return "\n\n---\n\n".join(parts)
 
-def generate_answer(question: str, docs: List[Document]) -> str:
+async def generate_answer(question: str, docs: List[Document]) -> str:
     llm = get_llm()
-    prompt = _TEMPLATE.format_messages(question=question, context=format_docs(docs))
-    resp = llm.invoke(prompt)
+    prompt = _TEMPLATE.format_messages(
+        question=question,
+        context=format_docs(docs),
+    )
+    # IMPORTANTE: usar la vía asíncrona
+    resp = await llm.ainvoke(prompt)
     return resp.content if hasattr(resp, "content") else str(resp)
+    
