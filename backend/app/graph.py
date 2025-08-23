@@ -1,4 +1,3 @@
-# graph.py
 from typing import List, TypedDict
 from langgraph.graph import StateGraph, END
 from langchain.schema import Document
@@ -34,9 +33,9 @@ def retrieval_node(state: AgentState):
     sources = list(dict.fromkeys([d.metadata.get("source", "") for d in docs if d]))
     return {**state, "docs": docs, "scores": scores, "sources": sources}
 
-# IMPORTANT: async
-async def generation_node(state: AgentState):
-    answer = await generate_answer(state["question"], state.get("docs", []))
+# 👇 síncrono
+def generation_node(state: AgentState):
+    answer = generate_answer(state["question"], state.get("docs", []))
     scores = state.get("scores", [])
     conf = float(sum(scores)/len(scores)) if scores else 0.5
     return {**state, "answer": answer, "confidence": round(conf, 3)}
@@ -52,7 +51,7 @@ def build_graph():
     g = StateGraph(AgentState)
     g.add_node("input", input_node)
     g.add_node("retrieval", retrieval_node)
-    g.add_node("generation", generation_node)  # <- async node
+    g.add_node("generation", generation_node)
     g.add_node("output", output_node)
 
     g.set_entry_point("input")

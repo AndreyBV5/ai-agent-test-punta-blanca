@@ -19,12 +19,11 @@ app.add_middleware(
 def root():
     return {"ok": True, "service": "rag-agent", "health": "green"}
 
-# IMPORTANT: async + await ainvoke
 @app.post("/api/ask", response_model=AskResponse)
 async def ask(req: AskRequest):
     try:
         _graph = build_graph()
-        result = await _graph.ainvoke({"question": req.question})
+        result = _graph.invoke({"question": req.question})
         return AskResponse(
             answer=str(result.get("answer", "")),
             sources=[str(s) for s in result.get("sources", [])],

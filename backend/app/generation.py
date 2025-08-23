@@ -1,4 +1,3 @@
-# generation.py
 import os
 from typing import List
 from dotenv import load_dotenv
@@ -18,10 +17,11 @@ _SYSTEM = (
 
 _TEMPLATE = ChatPromptTemplate.from_messages([
     ("system", _SYSTEM),
-    ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara."),
+    ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara.")
 ])
 
 def get_llm():
+    # usa GOOGLE_API_KEY del entorno (local .env / Cloud Run variable)
     return ChatGoogleGenerativeAI(
         model=GENERATION_MODEL,
         temperature=0.2,
@@ -35,9 +35,9 @@ def format_docs(docs: List[Document]) -> str:
         parts.append(f"[Fuente] {src}\n{d.page_content}")
     return "\n\n---\n\n".join(parts)
 
-# IMPORTANT: ahora es async y usa ainvoke
-async def generate_answer(question: str, docs: List[Document]) -> str:
+def generate_answer(question: str, docs: List[Document]) -> str:
     llm = get_llm()
     prompt = _TEMPLATE.format_messages(question=question, context=format_docs(docs))
-    resp = await llm.ainvoke(prompt)
+    resp = llm.invoke(prompt)
+    # 👇 ojo: sin coma al final, para NO devolver una tupla
     return resp.content if hasattr(resp, "content") else str(resp)
