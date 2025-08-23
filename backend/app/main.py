@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from .schemas import AskRequest, AskResponse
 from .graph import build_graph
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI(title="RAG Agent – Punta Blanca", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
@@ -12,17 +15,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_graph = build_graph()
-
 @app.get("/")
 def root():
     return {"ok": True, "service": "rag-agent", "health": "green"}
 
-# Endpoint SINCRÓNICO -> el grafo también se invoca de forma sync
+# IMPORTANT: async + await ainvoke
 @app.post("/api/ask", response_model=AskResponse)
-def ask(req: AskRequest):
+async def ask(req: AskRequest):
     try:
-        result = _graph.invoke({"question": req.question})
+        _graph = build_graph()
+        result = await _graph.ainvoke({"question": req.question})
         return AskResponse(
             answer=str(result.get("answer", "")),
             sources=[str(s) for s in result.get("sources", [])],

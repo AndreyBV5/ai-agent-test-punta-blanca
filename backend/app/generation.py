@@ -1,9 +1,12 @@
+# generation.py
 import os
 from typing import List
-import anyio
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.schema import Document
+
+load_dotenv()
 
 GENERATION_MODEL = os.getenv("GENERATION_MODEL", "gemini-1.5-flash")
 
@@ -19,7 +22,11 @@ _TEMPLATE = ChatPromptTemplate.from_messages([
 ])
 
 def get_llm():
-    return ChatGoogleGenerativeAI(model=GENERATION_MODEL, temperature=0.2)
+    return ChatGoogleGenerativeAI(
+        model=GENERATION_MODEL,
+        temperature=0.2,
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+    )
 
 def format_docs(docs: List[Document]) -> str:
     parts = []
@@ -28,17 +35,9 @@ def format_docs(docs: List[Document]) -> str:
         parts.append(f"[Fuente] {src}\n{d.page_content}")
     return "\n\n---\n\n".join(parts)
 
-# ---- Nota: helper asíncrono que corre DENTRO de anyio.run() ----
-async def _agen(question: str, docs: List[Document]) -> str:
+# IMPORTANT: ahora es async y usa ainvoke
+async def generate_answer(question: str, docs: List[Document]) -> str:
     llm = get_llm()
-    prompt = _TEMPLATE.format_messages(
-        question=question,
-        context=format_docs(docs),
-    )
+    prompt = _TEMPLATE.format_messages(question=question, context=format_docs(docs))
     resp = await llm.ainvoke(prompt)
     return resp.content if hasattr(resp, "content") else str(resp)
-
-def generate_answer(question: str, docs: List[Document]) -> str:
-    """Función SINCRÓNICA que garantiza un loop propio incluso si
-    la ejecuta un AnyIO worker thread sin event loop activo."""
-    return anyio.run(_agen, question, docs)

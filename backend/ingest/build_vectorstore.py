@@ -11,6 +11,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+from dotenv import load_dotenv
+load_dotenv()  
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SRC_DIR = os.path.join(BASE_DIR, "data", "sources")
 VEC_DIR = os.path.join(BASE_DIR, "data", "vectorstore")
