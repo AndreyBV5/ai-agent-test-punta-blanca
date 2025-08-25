@@ -9,7 +9,7 @@ api_key = os.getenv("PINECONE_API_KEY")
 if not api_key:
     raise RuntimeError("❌ Falta PINECONE_API_KEY en el entorno")
 
-INDEX = os.getenv("PINECONE_INDEX", "punta-blanca-1024")
+INDEX = os.getenv("PINECONE_INDEX", "punta-blanca")
 MODEL = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")
 
 pc = Pinecone(api_key=api_key)

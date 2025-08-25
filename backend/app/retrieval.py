@@ -8,7 +8,7 @@ from langchain.docstore.document import Document
 load_dotenv()
 
 PINECONE_API_KEY   = os.environ["PINECONE_API_KEY"]
-PINECONE_INDEX     = os.environ["PINECONE_INDEX"]                 # p.ej. "punta-blanca-1024"
+PINECONE_INDEX     = os.environ["PINECONE_INDEX"]                 # p.ej. "punta-blanca"
 PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE", "default")   # el mismo que usaste en ingest
 INTEGRATED_MODEL   = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")
 RAG_TOP_K          = int(os.getenv("RAG_TOP_K", "8"))             # subimos a 8

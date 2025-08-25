@@ -26,7 +26,7 @@ SEEDS = [
 ]
 
 SITEMAP  = urljoin(BASE, "sitemap.xml")
-INDEX    = os.getenv("PINECONE_INDEX", "punta-blanca-1024")
+INDEX    = os.getenv("PINECONE_INDEX", "punta-blanca")
 MODEL    = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")  # 1024 dims
 NAMESPACE= os.getenv("PINECONE_NAMESPACE", "default")              # opcional
 MAX_PAGES= int(os.getenv("CRAWL_MAX_PAGES", "60"))
