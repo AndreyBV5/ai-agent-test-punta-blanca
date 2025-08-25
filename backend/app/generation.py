@@ -13,6 +13,7 @@ _SYSTEM = (
     "Eres un asistente de IA para preguntas sobre Punta Blanca Solutions. "
     "Usa SOLO la información del contexto recuperado. Si no está en el contexto, di que no aparece. "
     "Responde en el idioma de la pregunta. Sé conciso, preciso y cita brevemente las fuentes por URL al final."
+    "Si la pregunta es sobre equipo directivo (CEO, CTO, COO, fundadores), busca explícitamente nombres y cargos."
 )
 
 _TEMPLATE = ChatPromptTemplate.from_messages([
