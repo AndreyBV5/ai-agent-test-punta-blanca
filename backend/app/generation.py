@@ -17,27 +17,27 @@ _SYSTEM = (
 
 _TEMPLATE = ChatPromptTemplate.from_messages([
     ("system", _SYSTEM),
-    ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara.")
+    ("human", "Pregunta: {question}\n\nContexto:\n{context}\n\nResponde de forma clara."),
 ])
 
-def get_llm():
-    # usa GOOGLE_API_KEY del entorno (local .env / Cloud Run variable)
-    return ChatGoogleGenerativeAI(
-        model=GENERATION_MODEL,
-        temperature=0.2,
-        google_api_key=os.getenv("GOOGLE_API_KEY"),
-    )
-
-def format_docs(docs: List[Document]) -> str:
+def _format_docs(docs: List[Document]) -> str:
     parts = []
     for d in docs:
         src = d.metadata.get("source", "")
         parts.append(f"[Fuente] {src}\n{d.page_content}")
     return "\n\n---\n\n".join(parts)
 
+def _llm():
+    return ChatGoogleGenerativeAI(
+        model=GENERATION_MODEL,
+        temperature=0.2,
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+    )
+
 def generate_answer(question: str, docs: List[Document]) -> str:
-    llm = get_llm()
-    prompt = _TEMPLATE.format_messages(question=question, context=format_docs(docs))
-    resp = llm.invoke(prompt)
-    # 👇 ojo: sin coma al final, para NO devolver una tupla
+    prompt = _TEMPLATE.format_messages(
+        question=question,
+        context=_format_docs(docs),
+    )
+    resp = _llm().invoke(prompt)
     return resp.content if hasattr(resp, "content") else str(resp)

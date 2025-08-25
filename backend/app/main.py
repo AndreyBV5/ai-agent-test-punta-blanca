@@ -3,9 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .schemas import AskRequest, AskResponse
 from .graph import build_graph
 
-from dotenv import load_dotenv
-load_dotenv()
-
 app = FastAPI(title="RAG Agent – Punta Blanca", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
@@ -15,14 +12,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_graph = build_graph()
+
 @app.get("/")
 def root():
     return {"ok": True, "service": "rag-agent", "health": "green"}
 
 @app.post("/api/ask", response_model=AskResponse)
-async def ask(req: AskRequest):
+def ask(req: AskRequest):
     try:
-        _graph = build_graph()
         result = _graph.invoke({"question": req.question})
         return AskResponse(
             answer=str(result.get("answer", "")),

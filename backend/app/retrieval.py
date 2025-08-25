@@ -1,4 +1,3 @@
-# app/retrieval.py
 import os
 from typing import List, Tuple
 from langchain.docstore.document import Document
@@ -8,7 +7,9 @@ from pinecone import Pinecone
 load_dotenv()
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
-PINECONE_INDEX   = os.environ["PINECONE_INDEX"]              # p.ej. "punta-blanca"
+# ⚠️ Debe coincidir EXACTO con el nombre del índice que creaste en Pinecone (dim=1024)
+PINECONE_INDEX   = os.environ["PINECONE_INDEX"]              # p. ej. "punta-blanca-1024"
+# Modelo integrado de Pinecone Inference para embeddings (dim 1024)
 INTEGRATED_MODEL = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")
 RAG_TOP_K        = int(os.getenv("RAG_TOP_K", "4"))
 
@@ -16,7 +17,7 @@ _pc = None
 _index = None
 
 def _ensure_index():
-    """Obtiene singletons de cliente e índice Pinecone."""
+    """Singleton del cliente e índice Pinecone."""
     global _pc, _index
     if _index is None:
         _pc = Pinecone(api_key=PINECONE_API_KEY)
@@ -24,7 +25,7 @@ def _ensure_index():
     return _pc, _index
 
 def load_vectorstore():
-    """Compat con tu grafo: antes devolvías un vectorstore; ahora devolvemos el índice Pinecone."""
+    """Compat con el grafo: devolvemos el índice de Pinecone."""
     _, index = _ensure_index()
     return index
 
@@ -34,12 +35,13 @@ def build_retriever(vs):
 
 def similarity_with_scores(vs, query: str) -> List[Tuple[Document, float]]:
     """
-    Embebe el query con el modelo integrado E5 (1024 dim) y consulta Pinecone.
-    Devuelve [(Document, score)].
+    1) Embebe el query con Pinecone Inference (input_type='query') usando E5 (1024 dim).
+    2) Hace query al índice.
+    3) Devuelve [(Document, score)].
     """
     pc, index = _ensure_index()
 
-    # 1) Embedding del query con Pinecone Inference (tipo 'query' para E5)
+    # 1) Embedding del query
     resp = pc.inference.embed(
         model=INTEGRATED_MODEL,
         inputs=[query],
@@ -48,16 +50,12 @@ def similarity_with_scores(vs, query: str) -> List[Tuple[Document, float]]:
     qvec = resp.data[0].values  # 1024 floats
 
     # 2) Búsqueda en Pinecone
-    res = index.query(
-        vector=qvec,
-        top_k=RAG_TOP_K,
-        include_metadata=True
-    )
+    res = index.query(vector=qvec, top_k=RAG_TOP_K, include_metadata=True)
 
     out: List[Tuple[Document, float]] = []
     for m in res.matches:
         meta = m.metadata or {}
-        # Si en el upsert guardaste el texto del chunk:
+        # En el upsert guardamos el texto bajo "page_content"
         text = meta.get("page_content") or meta.get("text") or meta.get("content") or ""
         doc  = Document(page_content=text, metadata=meta)
         out.append((doc, float(m.score)))
