@@ -27,12 +27,11 @@ SEEDS = [
 SITEMAP   = urljoin(BASE, "sitemap.xml")
 INDEX     = os.getenv("PINECONE_INDEX", "punta-blanca")
 MODEL     = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")  # 1024 dims
-# 👇 Namespace opcional: si está vacío, upsert a __default__ (namespace=None)
+# Namespace opcional: si está vacío, upsert a __default__ (namespace=None)
 NAMESPACE = os.getenv("PINECONE_NAMESPACE", "").strip()
 MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "60"))
 
 UA = {"User-Agent": "Mozilla/5.0 (pb-crawler)"}
-
 
 def clean_text(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
@@ -41,7 +40,6 @@ def clean_text(html: str) -> str:
     txt = soup.get_text("\n")
     txt = re.sub(r"\n{2,}", "\n\n", txt)
     return txt.strip()
-
 
 def try_sitemap():
     urls = []
@@ -56,7 +54,6 @@ def try_sitemap():
     except Exception:
         pass
     return list(dict.fromkeys(urls))
-
 
 def crawl(max_pages=MAX_PAGES):
     seen, q, docs = set(), list(SEEDS + try_sitemap()), []
@@ -84,18 +81,24 @@ def crawl(max_pages=MAX_PAGES):
     client.close()
     return docs
 
-
 def main():
     print("[crawl] Recolectando páginas…")
     docs = crawl()
 
-    # Añade LinkedIn si existe
-    linked = os.path.join(os.path.dirname(__file__), "..", "data", "sources", "linkedin_punta_blanca.txt")
+    # Añade LinkedIn si existe (con URL real y etiqueta)
+    linked = os.path.join(os.path.dirname(__file__), "..", "sources", "linkedin_punta_blanca.txt")
+    linked = os.path.abspath(linked)
     if os.path.exists(linked):
         with open(linked, "r", encoding="utf-8") as f:
             txt = f.read().strip()
             if txt:
-                docs.append(Document(page_content=txt, metadata={"source": "linkedin"}))
+                docs.append(Document(
+                    page_content=txt,
+                    metadata={
+                        "source": "https://www.linkedin.com/company/puntablancasolutions/",
+                        "kind": "linkedin"
+                    }
+                ))
 
     if not docs:
         raise SystemExit("No se recolectó contenido.")
@@ -131,12 +134,14 @@ def main():
     )
     vecs = [d.values for d in emb.data]
 
-    # Upsert (guarda SIEMPRE page_content + source)
+    # Upsert (guarda SIEMPRE page_content + title si falta)
     print(f"[upsert] {len(vecs)} vectores → Pinecone (ns='{NAMESPACE or '__default__'}')")
     batch, B = [], 100
     for v, meta, text in zip(vecs, metas, texts):
         meta = dict(meta or {})
         meta["page_content"] = text
+        if "title" not in meta:
+            meta["title"] = (text.split("\n", 1)[0] or "").strip()[:120]
         batch.append({"id": str(uuid.uuid4()), "values": v, "metadata": meta})
         if len(batch) >= B:
             idx.upsert(vectors=batch, namespace=(NAMESPACE or None))
@@ -144,7 +149,6 @@ def main():
     if batch:
         idx.upsert(vectors=batch, namespace=(NAMESPACE or None))
     print("[ok] Índice actualizado.")
-
 
 if __name__ == "__main__":
     main()

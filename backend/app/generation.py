@@ -11,9 +11,11 @@ GENERATION_MODEL = os.getenv("GENERATION_MODEL", "gemini-1.5-flash")
 
 _SYSTEM = (
     "Eres un asistente de IA para preguntas sobre Punta Blanca Solutions. "
-    "Usa SOLO la información del contexto recuperado. Si no está en el contexto, di que no aparece. "
-    "Responde en el idioma de la pregunta. Sé conciso, preciso y cita brevemente las fuentes por URL al final."
-    "Si la pregunta es sobre equipo directivo (CEO, CTO, COO, fundadores), busca explícitamente nombres y cargos."
+    "Usa SOLO la información del contexto recuperado. "
+    "Si hay indicios parciales, redacta una respuesta breve y explícita sobre lo que SÍ aparece. "
+    "Si realmente no hay nada útil, di que no aparece en el contexto. "
+    "Responde en el idioma de la pregunta; sé conciso y cita brevemente las fuentes por URL al final. "
+    "Si la pregunta es sobre equipo directivo (CEO, CTO, COO, fundadores), busca explícitamente nombres y cargos en el contexto."
 )
 
 _TEMPLATE = ChatPromptTemplate.from_messages([
