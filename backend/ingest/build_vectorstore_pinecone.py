@@ -11,7 +11,6 @@ from langchain.docstore.document import Document
 load_dotenv()
 
 BASE = "https://www.puntablanca.ai/"
-# Seeds en ES/EN para garantizar cobertura
 SEEDS = [
     # Español
     "https://www.puntablanca.ai/es",
@@ -26,13 +25,14 @@ SEEDS = [
 ]
 
 SITEMAP   = urljoin(BASE, "sitemap.xml")
-INDEX     = os.getenv("PINECONE_INDEX", "punta-blanca-1024")
+INDEX     = os.getenv("PINECONE_INDEX", "punta-blanca")
 MODEL     = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")  # 1024 dims
-# MUY IMPORTANTE: cadena vacía "" => __default__
+# 👇 Namespace opcional: si está vacío, upsert a __default__ (namespace=None)
 NAMESPACE = os.getenv("PINECONE_NAMESPACE", "").strip()
-MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "80"))
+MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "60"))
 
 UA = {"User-Agent": "Mozilla/5.0 (pb-crawler)"}
+
 
 def clean_text(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
@@ -41,6 +41,7 @@ def clean_text(html: str) -> str:
     txt = soup.get_text("\n")
     txt = re.sub(r"\n{2,}", "\n\n", txt)
     return txt.strip()
+
 
 def try_sitemap():
     urls = []
@@ -54,8 +55,8 @@ def try_sitemap():
                     urls.append(u.split("#")[0])
     except Exception:
         pass
-    # quita duplicados respetando orden
     return list(dict.fromkeys(urls))
+
 
 def crawl(max_pages=MAX_PAGES):
     seen, q, docs = set(), list(SEEDS + try_sitemap()), []
@@ -83,11 +84,12 @@ def crawl(max_pages=MAX_PAGES):
     client.close()
     return docs
 
+
 def main():
     print("[crawl] Recolectando páginas…")
     docs = crawl()
 
-    # Adjunta texto de LinkedIn si existe
+    # Añade LinkedIn si existe
     linked = os.path.join(os.path.dirname(__file__), "..", "data", "sources", "linkedin_punta_blanca.txt")
     if os.path.exists(linked):
         with open(linked, "r", encoding="utf-8") as f:
@@ -105,8 +107,9 @@ def main():
 
     pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
-    # Crea índice si no existe (dim=1024 para e5-large)
-    if INDEX not in [i["name"] for i in pc.list_indexes()]:
+    # Crea índice si no existe (dim=1024 para multilingual-e5-large)
+    existing = [i["name"] for i in pc.list_indexes()]
+    if INDEX not in existing:
         print(f"[index] creando {INDEX} (dim=1024)…")
         pc.create_index(
             name=INDEX,
@@ -114,41 +117,34 @@ def main():
             metric="cosine",
             spec=ServerlessSpec(cloud="aws", region="us-east-1"),
         )
+
     idx = pc.Index(INDEX)
 
-    # Embeddings (passages)
+    # Embeddings PASSAGES
     texts = [c.page_content for c in chunks]
     metas = [c.metadata for c in chunks]
     print("[embed] E5(passages) …")
     emb = pc.inference.embed(
         model=MODEL,
         inputs=texts,
-        parameters={"input_type": "passage", "truncate": "END"}
+        parameters={"input_type": "passage", "truncate": "END"},
     )
     vecs = [d.values for d in emb.data]
 
-    # Helper para upsert respetando "__default__"
-    def _upsert(batch):
-        if not batch:
-            return
-        if NAMESPACE:
-            idx.upsert(vectors=batch, namespace=NAMESPACE)
-        else:
-            idx.upsert(vectors=batch)  # sin namespace => __default__
-
-    # Upsert por lotes
-    print(f"[upsert] {len(vecs)} vectores → Pinecone")
+    # Upsert (guarda SIEMPRE page_content + source)
+    print(f"[upsert] {len(vecs)} vectores → Pinecone (ns='{NAMESPACE or '__default__'}')")
     batch, B = [], 100
     for v, meta, text in zip(vecs, metas, texts):
         meta = dict(meta or {})
         meta["page_content"] = text
         batch.append({"id": str(uuid.uuid4()), "values": v, "metadata": meta})
         if len(batch) >= B:
-            _upsert(batch)
+            idx.upsert(vectors=batch, namespace=(NAMESPACE or None))
             batch = []
-    _upsert(batch)
-
+    if batch:
+        idx.upsert(vectors=batch, namespace=(NAMESPACE or None))
     print("[ok] Índice actualizado.")
+
 
 if __name__ == "__main__":
     main()
