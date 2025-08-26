@@ -12,21 +12,15 @@ load_dotenv()
 
 BASE     = "https://www.puntablanca.ai/"
 SEEDS = [
-    # Español
-    "https://www.puntablanca.ai/es",
-    "https://www.puntablanca.ai/es/about-us",
-    "https://www.puntablanca.ai/es/contact-us",
-    "https://www.puntablanca.ai/es/services-tech-details",
-
-    # Inglés
-    "https://www.puntablanca.ai/",
-    "https://www.puntablanca.ai/about-us",
-    "https://www.puntablanca.ai/contact-us",
-    "https://www.puntablanca.ai/services",
+    BASE,
+    urljoin(BASE, "services"),
+    urljoin(BASE, "about-us"),
+    urljoin(BASE, "contact-us"),
+    urljoin(BASE, "es/about-us"),
 ]
 
 SITEMAP  = urljoin(BASE, "sitemap.xml")
-INDEX    = os.getenv("PINECONE_INDEX", "punta-blanca")
+INDEX    = os.getenv("PINECONE_INDEX", "punta-blanca-1024")
 MODEL    = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")  # 1024 dims
 NAMESPACE= os.getenv("PINECONE_NAMESPACE", "default")              # opcional
 MAX_PAGES= int(os.getenv("CRAWL_MAX_PAGES", "60"))
