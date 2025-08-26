@@ -14,7 +14,7 @@ _SYSTEM = (
     "Usa SOLO la información del contexto recuperado. "
     "Si hay indicios parciales, redacta una respuesta breve y explícita sobre lo que SÍ aparece. "
     "Si realmente no hay nada útil, di que no aparece en el contexto. "
-    "Responde en el idioma de la pregunta; sé conciso y cita brevemente las fuentes por URL al final. "
+    "Responde en el idioma de la pregunta; sé conciso. "
     "Si la pregunta es sobre equipo directivo (CEO, CTO, COO, fundadores), busca explícitamente nombres y cargos en el contexto."
 )
 
