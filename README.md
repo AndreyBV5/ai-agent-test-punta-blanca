@@ -216,10 +216,44 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 
 ## 🌐 10. Uso de Pinecone (Dashboard Web)
 
-1. Ingresa en [https://app.pinecone.io](https://app.pinecone.io).  
-2. Verifica que el índice `punta-blanca` existe.  
-3. Entra en el namespace `__default__` y revisa algunos vectores: deberías ver `metadata.source = "https://www.linkedin.com/company/puntablancasolutions/"` y `.../about-us`.  
-4. Si cambias el txt de LinkedIn o se actualiza la web → vuelve a correr `build_vectorstore_pinecone.py` para refrescar.
+Esta sección explica cómo **crear tu cuenta, API key e índice en Pinecone** para usarlo como **vectorstore**.  
+👉 Si no quieres hacerlo manualmente, el script de ingesta (`backend/ingest/build_vectorstore_pinecone.py`) **crea el índice automáticamente** si no existe (usando los valores de tu `.env`).
+
+## A) Crear cuenta y API Key
+
+1. Ve a [https://app.pinecone.io](https://app.pinecone.io) y crea una cuenta (plan Starter sirve).  
+2. En el menú izquierdo, entra a **API Keys → Create API key**.  
+3. Ponle un nombre (ejemplo: `ai-agent-local`) y crea la key.  
+4. Copia la key (formato `pcsk_...`) y agrégala a tu `.env`:
+
+## B) Crear el índice (Serverless)
+
+Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la interfaz web:
+
+1. En el menú izquierdo, ve a **Indexes → Create Index**.  
+2. Configura así:  
+   - **Name**: `punta-blanca` *(debe coincidir con `PINECONE_INDEX`)*  
+   - **Deployment**: `Serverless`  
+   - **Cloud**: `AWS`  
+   - **Region**: `us-east-1`  
+   - **Metric**: `cosine`  
+   - **Dimension**: `1024` ← requerido por el modelo `multilingual-e5-large`  
+3. Haz clic en **Create Index**.  
+
+💡 **Dimensiones según modelo de embeddings**:  
+- `multilingual-e5-large` ⇒ **1024**  
+- `multilingual-e5-base` ⇒ 768  
+- `e5-small` ⇒ 384  
+
+> Ajusta también el valor de `INTEGRATED_MODEL` en tu `.env`.
+
+---
+
+## C) Namespaces
+
+- Un índice puede tener múltiples **namespaces** (particiones lógicas).  
+- Si no defines `PINECONE_NAMESPACE`, el SDK usa `__default__`.  
+- En este proyecto se recomienda dejar el namespace **vacío** para evitar confusiones.  
 
 ---
 
@@ -247,5 +281,6 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 6. Levantar servidor con`GCP` para desplegar en Cloud Run. (Probarlo en producción)
 7. Hacer preguntas vía API.  
 8. Si agregas nuevas fuentes → volver a correr ingesta.  
+
 
 
