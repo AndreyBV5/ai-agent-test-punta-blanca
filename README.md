@@ -271,7 +271,7 @@ Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la i
 
 ---
 
-## 🧾 11. Resumen de flujo de trabajo
+## 🧾 12. Resumen de flujo de trabajo
 
 1. Clonar repo y crear venv.  
 2. Instalar dependencias.  
@@ -281,6 +281,7 @@ Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la i
 6. Levantar servidor con`GCP` para desplegar en Cloud Run. (Probarlo en producción)
 7. Hacer preguntas vía API.  
 8. Si agregas nuevas fuentes → volver a correr ingesta.  
+
 
 
 
