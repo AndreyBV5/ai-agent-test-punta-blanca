@@ -28,7 +28,28 @@ backend/
 └─ Dockerfile
 ```
 
-## 🚀 1. Clonar el repositorio
+## 🔧 1. Arquitectura del sistema
+
+El proyecto sigue un flujo **end-to-end** de tipo **RAG (Retrieval Augmented Generation)**:
+
+1. **Usuario hace una pregunta** a través del endpoint `/api/ask`.  
+2. **Embeddings de la query**: la pregunta se convierte en un vector usando el modelo `multilingual-e5-large`.  
+3. **Búsqueda en Pinecone**: se consulta el índice `punta-blanca` para recuperar los fragmentos más relevantes (chunks del sitio web y de LinkedIn).  
+4. **Contexto**: los documentos recuperados se formatean y se pasan al modelo generativo.  
+5. **Generación de respuesta**: Gemini (`gemini-1.5-flash`) recibe la pregunta + contexto y devuelve una respuesta natural en el idioma del usuario.  
+6. **Respuesta al cliente**: FastAPI entrega un JSON con `answer`, `sources` (URLs) y `confidence` (nivel de similitud promedio).  
+
+**Componentes principales:**
+- `app/main.py` → API FastAPI con endpoints (`/` y `/api/ask`).  
+- `graph.py` → define el grafo de nodos: input → retrieval → generation → output.  
+- `retrieval.py` → conecta con Pinecone y aplica boosts/filtros.  
+- `generation.py` → construye prompt y llama al LLM de Gemini.  
+- `ingest/build_vectorstore_pinecone.py` → crawler + embeddings + upsert en Pinecone.  
+- `data/sources/linkedin_punta_blanca.txt` → fuente manual adicional.  
+
+---
+
+## 🚀 2. Clonar el repositorio
 
 ```bash
 git clone https://github.com/tu-usuario/ai-agent-test.git
@@ -37,7 +58,7 @@ cd ai-agent-test
 
 ---
 
-## 🐍 2. Crear y activar entorno virtual
+## 🐍 3. Crear y activar entorno virtual
 
 ### Windows (PowerShell)
 ```powershell
@@ -53,7 +74,7 @@ source .venv/bin/activate
 
 ---
 
-## 📦 3. Instalar dependencias
+## 📦 4. Instalar dependencias
 
 ```bash
 pip install --upgrade pip
@@ -62,7 +83,7 @@ pip install -r backend/requirements.txt
 
 ---
 
-## 🔑 4. Configuración de variables de entorno
+## 🔑 5. Configuración de variables de entorno
 
 Crea un archivo `.env` en la raíz del proyecto con tus credenciales:
 
@@ -84,7 +105,7 @@ RAG_TOP_K=4
 
 ---
 
-## 🗂️ 5. Ingesta de datos (crawling + embeddings)
+## 🗂️ 6. Ingesta de datos (crawling + embeddings)
 
 ⚠️ Este paso es **obligatorio** la primera vez (y cada vez que quieras refrescar la información).
 
@@ -109,7 +130,7 @@ Esto significa que ya tienes datos en Pinecone y el agente podrá usarlos.
 
 ---
 
-## ▶️ 6. Levantar el servidor local (FastAPI + Uvicorn)
+## ▶️ 7. Levantar el servidor local (FastAPI + Uvicorn)
 
 ```bash
 cd backend
@@ -138,7 +159,7 @@ Respuesta esperada:
 
 ---
 
-## ☁️ 7. Deployment en Google Cloud Run (CI/CD con GitHub)
+## ☁️ 8. Deployment en Google Cloud Run (CI/CD con GitHub)
 
 > Sin YAML. Todo por interfaz gráfica en <https://console.cloud.google.com/run>.
 
@@ -179,7 +200,7 @@ En los logs verás líneas como `[retrieved sources] [...]` para depurar el retr
 
 ---
 
-## 🔄 7) Actualizar contenido (re-ingesta)
+## 🔄 9) Actualizar contenido (re-ingesta)
 
 Cuando cambien las fuentes (web/LinkedIn), **vuelve a ejecutar** localmente:
 
@@ -193,7 +214,7 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 ---
 
 
-## 🌐 8. Uso de Pinecone (Dashboard Web)
+## 🌐 10. Uso de Pinecone (Dashboard Web)
 
 1. Ingresa en [https://app.pinecone.io](https://app.pinecone.io).  
 2. Verifica que el índice `punta-blanca` existe.  
@@ -202,7 +223,21 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 
 ---
 
-## 🧾 9. Resumen de flujo de trabajo
+## 📐 11. Decisiones técnicas
+
+- **FastAPI**: framework rápido y con documentación automática.  
+- **LangChain**: simplifica la orquestación de RAG y el manejo de prompts.  
+- **Gemini (Google Generative AI)**: modelo multilingüe con alto rendimiento en español.  
+- **Pinecone**: vectorstore administrado en la nube, confiable y escalable.  
+- **Modelo `multilingual-e5-large` (1024 dims)**: equilibrio entre precisión semántica y costo.  
+- **`RAG_TOP_K=6`**: número de pasajes recuperados, buscando balance entre cobertura y ruido.  
+- **Namespace vacío (`__default__`)**: evita confusiones y mantiene datos centralizados.  
+- **Boosting en retrieval**: prioriza páginas relevantes (`about`, `services`, LinkedIn`) frente a páginas poco útiles (`privacy`, `terms`).  
+- **Arquitectura desacoplada**: la ingesta se corre solo para actualizar Pinecone, mientras que el servicio responde siempre en tiempo real consultando esa base vectorial.  
+
+---
+
+## 🧾 11. Resumen de flujo de trabajo
 
 1. Clonar repo y crear venv.  
 2. Instalar dependencias.  
@@ -212,4 +247,5 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 6. Levantar servidor con`GCP` para desplegar en Cloud Run. (Probarlo en producción)
 7. Hacer preguntas vía API.  
 8. Si agregas nuevas fuentes → volver a correr ingesta.  
+
 
