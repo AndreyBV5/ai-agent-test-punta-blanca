@@ -1,4 +1,3 @@
-# app/retrieval.py
 import os
 from typing import List, Tuple
 from dotenv import load_dotenv
@@ -9,7 +8,7 @@ load_dotenv()
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 PINECONE_INDEX   = os.environ["PINECONE_INDEX"]
-# Si está vacío/no definido => namespace __default__ (None en SDK)
+
 PINECONE_NAMESPACE = os.getenv("PINECONE_NAMESPACE", "").strip()
 
 INTEGRATED_MODEL   = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")

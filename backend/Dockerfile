@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 WORKDIR /app
 
-# (Opcional) dependencias del sistema mínimas
+# dependencias del sistema mínimas
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -10,12 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el código
 COPY . ./
 
 # Variables/puerto para Cloud Run
 ENV PORT=8080
 EXPOSE 8080
 
-# Arranque del API (ya NO hacemos ingest aquí)
+# Arranque del API
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}

@@ -27,7 +27,7 @@ SEEDS = [
 SITEMAP   = urljoin(BASE, "sitemap.xml")
 INDEX     = os.getenv("PINECONE_INDEX", "punta-blanca")
 MODEL     = os.getenv("INTEGRATED_MODEL", "multilingual-e5-large")  # 1024 dims
-# Namespace opcional: si está vacío, upsert a __default__ (namespace=None)
+
 NAMESPACE = os.getenv("PINECONE_NAMESPACE", "").strip()
 MAX_PAGES = int(os.getenv("CRAWL_MAX_PAGES", "60"))
 
@@ -85,7 +85,6 @@ def main():
     print("[crawl] Recolectando páginas…")
     docs = crawl()
 
-    # Añade LinkedIn si existe (con URL real y etiqueta)
     linked = os.path.join(os.path.dirname(__file__), "..", "sources", "linkedin_punta_blanca.txt")
     linked = os.path.abspath(linked)
     if os.path.exists(linked):

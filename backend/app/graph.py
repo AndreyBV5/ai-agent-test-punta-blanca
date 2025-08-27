@@ -35,14 +35,14 @@ def retrieval_node(state: AgentState):
 
 def generation_node(state: AgentState):
     docs = state.get("docs", [])
-    # --- DEBUG mínimo (puedes quitarlo en prod)
+    # DEBUG mínimo
     try:
         print("[retrieved sources]", [d.metadata.get("source", "") for d in docs])
         if docs:
             print("[sample]", (docs[0].page_content or "")[:300].replace("\n", " "))
     except Exception:
         pass
-    # ---
+
     answer = generate_answer(state["question"], docs)
     scores = state.get("scores", [])
     conf = float(sum(scores)/len(scores)) if scores else 0.5
