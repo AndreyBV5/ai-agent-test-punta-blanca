@@ -219,14 +219,14 @@ No necesitas redeploy de Cloud Run para que lea lo nuevo (el servicio consulta P
 Esta sección explica cómo **crear tu cuenta, API key e índice en Pinecone** para usarlo como **vectorstore**.  
 👉 Si no quieres hacerlo manualmente, el script de ingesta (`backend/ingest/build_vectorstore_pinecone.py`) **crea el índice automáticamente** si no existe (usando los valores de tu `.env`).
 
-## A) Crear cuenta y API Key
+# A) Crear cuenta y API Key
 
 1. Ve a [https://app.pinecone.io](https://app.pinecone.io) y crea una cuenta (plan Starter sirve).  
 2. En el menú izquierdo, entra a **API Keys → Create API key**.  
 3. Ponle un nombre (ejemplo: `ai-agent-local`) y crea la key.  
 4. Copia la key (formato `pcsk_...`) y agrégala a tu `.env`:
 
-## B) Crear el índice (Serverless)
+# B) Crear el índice (Serverless)
 
 Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la interfaz web:
 
@@ -249,7 +249,7 @@ Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la i
 
 ---
 
-## C) Namespaces
+# C) Namespaces
 
 - Un índice puede tener múltiples **namespaces** (particiones lógicas).  
 - Si no defines `PINECONE_NAMESPACE`, el SDK usa `__default__`.  
@@ -281,6 +281,7 @@ Aunque el script puede crearlo automáticamente, si prefieres hacerlo desde la i
 6. Levantar servidor con`GCP` para desplegar en Cloud Run. (Probarlo en producción)
 7. Hacer preguntas vía API.  
 8. Si agregas nuevas fuentes → volver a correr ingesta.  
+
 
 
 
